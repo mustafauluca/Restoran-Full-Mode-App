@@ -1,0 +1,10 @@
+{
+  "name": "QRAdv Omni Restoran & Menü Ekosistemi",
+  "description": "Dinamik 1 Alana 1 Bedava kampanya motoru, PDF flyer oluşturucu, XLS ürün aktarımı, alerjen ve çok dilli menü, lokasyon bazlı masa/adrese sesli sipariş POS & Mutfak KDS, radyo ve TV menuboard.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
