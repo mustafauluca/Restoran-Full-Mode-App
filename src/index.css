@@ -12,9 +12,108 @@
   }
 }
 
+/* TV Menuboard Smooth & Slow Ambient Light Animations */
+@keyframes tv-light-sweep {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(15deg) brightness(1.08);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg) brightness(1);
+  }
+}
+
+@keyframes tv-aurora-glow {
+  0% {
+    transform: translate(-10%, -10%) scale(1) rotate(0deg);
+    opacity: 0.28;
+  }
+  50% {
+    transform: translate(15%, 10%) scale(1.15) rotate(180deg);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(-10%, -10%) scale(1) rotate(360deg);
+    opacity: 0.28;
+  }
+}
+
+@keyframes tv-text-drift {
+  0% {
+    transform: translateY(0px);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0px);
+    opacity: 0.95;
+  }
+}
+
+@keyframes tv-price-pulse {
+  0%, 100% {
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.75), 0 0 30px rgba(239, 68, 68, 0.4);
+    transform: scale(1.03);
+  }
+}
+
+@keyframes tv-shimmer-border {
+  0% {
+    border-color: rgba(245, 158, 11, 0.25);
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.05);
+  }
+  50% {
+    border-color: rgba(245, 158, 11, 0.65);
+    box-shadow: 0 0 35px rgba(245, 158, 11, 0.2);
+  }
+  100% {
+    border-color: rgba(245, 158, 11, 0.25);
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.05);
+  }
+}
+
 @keyframes marquee {
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
+}
+
+.animate-tv-aurora {
+  animation: tv-aurora-glow 22s ease-in-out infinite;
+}
+
+.animate-tv-sweep {
+  background-size: 200% 200%;
+  animation: tv-light-sweep 16s ease-in-out infinite;
+}
+
+.animate-tv-text {
+  animation: tv-text-drift 8s ease-in-out infinite;
+}
+
+.animate-tv-price {
+  animation: tv-price-pulse 4.5s ease-in-out infinite;
+}
+
+.animate-tv-card-glow {
+  animation: tv-shimmer-border 7s ease-in-out infinite;
+}
+
+.animate-marquee-slow {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 45s linear infinite;
 }
 
 .animate-marquee {
@@ -37,3 +136,4 @@
     width: 100%;
   }
 }
+

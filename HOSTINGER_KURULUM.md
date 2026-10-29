@@ -1,158 +1,100 @@
-# QRAdv Omni Restoran & Menü Sistemi - Hostinger Kurulum Kılavuzu
+# QR Adv Enterprise - Hostinger Modüler PHP Kurulum Kılavuzu
 
-Bu kılavuz, projenin Hostinger Paylaşımlı Hosting (cPanel / hPanel) veya Hostinger VPS / Cloud üzerinde sorunsuz şekilde yayınlanması için adım adım hazırlanmıştır.
-
----
-
-## 1. Hazırlık ve Sistem Gereksinimleri
-
-Hostinger hPanel panelinizde aşağıdaki ayarları kontrol edin:
-- **PHP Sürümü**: PHP 8.1, 8.2 veya 8.3 (hPanel -> Gelişmiş -> PHP Yapılandırması)
-- **PHP Eklentileri**: `pdo_mysql`, `mbstring`, `openssl`, `json`, `curl` (Varsayılan olarak açıktır)
-- **SSL Sertifikası (HTTPS)**: Kesinlikle aktif olmalıdır. (*Tarayıcıların GPS konum ve Web Audio sesli bildirim izinleri yalnızca HTTPS protokolünde çalışır.*)
-- **Web Sunucusu**: LiteSpeed / Apache (.htaccess desteği)
+Bu kılavuz, projenin **Hostinger Paylaşımlı Hosting (hPanel / cPanel)** veya **VPS / Cloud** sunucularda çalışan saf modüler PHP mimarisi ile kurulması için hazırlanmıştır.
 
 ---
 
-## 2. Adım: MySQL Veritabanı Kurulumu
+## 1. Modüler Klasör Yapısı (Standart PHP Mimarisi)
 
-1. Hostinger **hPanel**'e giriş yapın.
-2. Sol menüden **Veritabanları (Databases) -> MySQL Veritabanları** bölümüne gidin.
-3. Yeni bir veritabanı oluşturun:
-   - **MySQL Veritabanı Adı**: `u123456789_qradv`
-   - **MySQL Kullanıcı Adı**: `u123456789_admin`
-   - **Şifre**: Güçlü bir şifre belirleyin (örn: `QrAdv_2026!Secured`)
-4. Veritabanı oluştuktan sonra yanındaki **phpMyAdmin'e Gir** butonuna tıklayın.
-5. phpMyAdmin üst menüsünden **İçe Aktar (Import)** sekmesine tıklayın.
-6. Projemizdeki `schema.sql` dosyasını seçip **Git (Go)** butonuna basın. (10 adet ilişkisel tablo; `venues`, `products`, `campaigns`, `orders`, `waiter_calls` vb. otomatik oluşturulacaktır).
+Tüm dosyalar `public_html` dizini altına standart ve düzenli şekilde yerleştirilmiştir:
 
----
-
-## 3. Adım: PHP Veritabanı Bağlantı Dosyası (`db.php`)
-
-Hostinger `public_html/api/` veya `public_html/config/` klasörüne aşağıdaki `db.php` dosyasını yerleştirin:
-
-```php
-<?php
-// public_html/api/config.php
-declare(strict_types=1);
-
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json; charset=utf-8');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-$db_host = 'localhost';
-$db_name = 'u123456789_qradv'; // Hostinger veritabanı adınız
-$db_user = 'u123456789_admin'; // Hostinger veritabanı kullanıcınız
-$db_pass = 'QrAdv_2026!Secured'; // Belirlediğiniz şifre
-
-try {
-    $pdo = new PDO("mysql:host={$db_host};dbname={$db_name};charset=utf8mb4", $db_user, $db_pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Veritabanı bağlantı hatası: ' . $e->getMessage()]);
-    exit;
-}
+```text
+public_html/
+├── .htaccess                      # Temiz URL yönlendirmeleri (qradv.com/qr, /panel, /pos, /tv, /radyo)
+├── index.php                      # Ana Ön Kontrolör (Front Controller)
+├── schema.sql                     # 10 tablolu eksiksiz MySQL veritabanı şeması
+├── app/
+│   ├── core/                      # Genel Çekirdek İşlemler
+│   │   ├── Database.php           # PDO MySQL güvenli veritabanı sınıfı
+│   │   ├── Router.php             # Hızlı rota yönlendirici (Regex URL dispatcher)
+│   │   ├── Session.php            # Güvenli oturum yönetimi (CSRF & XSS korumalı)
+│   │   ├── Auth.php               # Süper Admin, Mekan Sahibi & POS PIN yetkilendirme
+│   │   └── Helpers.php            # Çeviriler, para formatı, 6 saatlik TCMB kur senkronu
+│   ├── languages/                 # Çoklu Dil Destekleri
+│   │   ├── tr.php                 # Türkçe dil sözlüğü
+│   │   ├── en.php                 # İngilizce dil sözlüğü
+│   │   ├── de.php                 # Almanca dil sözlüğü
+│   │   ├── ru.php                 # Rusça dil sözlüğü
+│   │   └── ar.php                 # Arapça dil sözlüğü (RTL uyumlu)
+│   ├── views/                     # Genel Arayüz & Görünümler
+│   │   ├── layouts/
+│   │   │   ├── header.php         # Standart Tailwind & FontAwesome başlığı
+│   │   │   ├── footer.php         # Sayfa altı ve telif hakları
+│   │   │   └── 404.php            # 404 Sayfa Bulunamadı arayüzü
+│   ├── modules/                   # Ayrı Ayrı Modüller
+│   │   ├── qr_menu/index.php      # Müşteri Akıllı QR Menü (1+1 Kampanya, GPS Masa/Adres ayrımı)
+│   │   ├── panel/index.php        # Mekan Sahibi Paneli (Sepet Kotaları, Kur Ayarları, Masa Yönetimi)
+│   │   ├── manager/index.php      # Sistem Süper Yöneticisi (Tüm mekanlar & SaaS yönetimi)
+│   │   ├── pos_kds/index.php      # Dokunmatik POS, Garson, Kasa & Mutfak Ekranı (Tamamla Butonu)
+│   │   ├── tv_board/index.php     # Menuboard TV Yayını (Yumuşak Işık Sweep & Drift Animasyonları)
+│   │   └── radio/index.php        # Mekan Radyo Yayını (Web Audio & Jingle Player)
+│   └── integrations/              # Dış Entegrasyonlar
+│       ├── payment/               # Ödeme Entegrasyonları (Iyzico, PayTR, Stripe)
+│       ├── shipping/              # Kurye & Paket Servis Mesafe ve Kota Motoru
+│       └── storage/               # Depolama Motoru (Yerel Media veya AWS S3 / Cloudflare R2)
+├── venues/                        # Her Mekanın Kendi Özel Klasörü
+│   ├── lezzet-duragi/             # Mekana özel klasör
+│   │   ├── config.json            # Mekan ayarları, sepet kotaları, masalar, TV ayarları
+│   │   └── menu.json              # Ürünler, 1+1 kampanyalar, alerjenler, hazırlık süreleri
+│   └── exchange_rates.json        # 6 Saatte bir güncellenen TCMB / ECB kur önbelleği
+├── media/                         # Görsel ve Medya Klasörü
+│   ├── uploads/                   # Yüklenen dosyalar
+│   ├── products/                  # Ürün fotoğrafları
+│   ├── banners/                   # Kampanya banner görselleri
+│   └── logos/                     # Mekan logoları
+└── radio/                         # Mekan Müzik ve Ses Dosyaları
+    ├── sarkilar/                  # Arka plan lounge ve chillout müzikleri (playlist.txt)
+    ├── jingle/                    # Mekan giriş ve karşılama jingle'ları (jingles.txt)
+    ├── reklam/                    # 1 Alana 1 Bedava ve indirim sesli reklamları (reklamlar.txt)
+    └── anonslar/                  # Mutfak sipariş hazır ve kurye çağrı sesleri (anonslar.txt)
 ```
 
 ---
 
-## 4. Adım: Frontend (Arayüz) Dosyalarını Hostinger'a Yükleme
+## 2. Kurulum Adımları (Hostinger hPanel)
 
-1. Bilgisayarınızda veya sunucuda proje dizininde derleme komutunu çalıştırın:
-   ```bash
-   npm run build
-   ```
-2. Bu işlem `dist/` klasörü içinde optimize edilmiş statik dosyaları (`index.html`, `assets/` klasörü) üretecektir.
-3. Hostinger hPanel -> **Dosyalar -> Dosya Yöneticisi (File Manager)**'ı açın.
-4. **`public_html`** klasörünün içine girin.
-5. `dist/` klasörü içerisindeki tüm dosyaları (`index.html`, `assets/`, favicon vb.) doğrudan **`public_html/`** ana dizinine yükleyin.
+### Adım 1: ZIP Dosyasını İndirin ve Yükleyin
+1. Projenizdeki `hostinger_hazir_kurulum_public_html.zip` dosyasını bilgisayarınıza indirin.
+2. Hostinger hPanel -> **Dosyalar (Files) -> Dosya Yöneticisi (File Manager)** bölümüne gidin.
+3. `public_html` klasörüne girin.
+4. Üstteki **Yükle (Upload)** butonuna basıp `hostinger_hazir_kurulum_public_html.zip` dosyasını seçin.
+5. ZIP dosyasına sağ tıklayıp **Buraya Çıkart (Extract)** deyin.
 
----
+### Adım 2: MySQL Veritabanını Oluşturun
+1. Hostinger hPanel -> **Veritabanları (Databases) -> MySQL Veritabanları** bölümüne gidin.
+2. Yeni veritabanı oluşturun:
+   - Veritabanı Adı: `u123456789_qradv`
+   - Kullanıcı Adı: `u123456789_root`
+   - Şifre: `QRadv_Secure2026!`
+3. **phpMyAdmin**'e girin ve `schema.sql` dosyasını içe aktarın (Import).
+4. `app/core/Database.php` dosyasındaki veritabanı adı, kullanıcı ve şifrenizi girin.
 
-## 5. Adım: `.htaccess` Dosyası (SPA ve URL Rotaları İçin Zorunlu)
-
-React SPA (Single Page Application) yapısında `qradv.com/qr/lezzet-duragi_ana-menu`, `qradv.com/pos`, `qradv.com/panel` gibi sayfalara tıklandığında veya sayfa yenilendiğinde 404 Not Found hatası almamak için `public_html/` dizininde bir `.htaccess` dosyası olmalıdır.
-
-`public_html/.htaccess` dosyasının içeriği:
-
-```apache
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-
-  # 1. Otomatik HTTPS yönlendirmesi (GPS ve Ses izinleri için zorunludur)
-  RewriteCond %{HTTPS} off
-  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-  # 2. PHP API isteklerini doğrudan işleme
-  RewriteCond %{REQUEST_URI} ^/api/ [NC]
-  RewriteRule ^api/(.*)$ api/$1 [L]
-
-  # 3. Gerçek dosya veya klasör varsa doğrudan servis et (resimler, js, css)
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
-
-  # 4. Tüm diğer rotaları React index.html'e yönlendir (qradv.com/qr, /pos, /panel vb.)
-  RewriteRule ^ index.html [L]
-</IfModule>
-
-# Gzip ve LiteSpeed Sıkıştırma (Hızlı Yükleme)
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
-</IfModule>
-
-# Tarayıcı Önbellekleme
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType image/jpg "access plus 1 year"
-  ExpiresByType image/jpeg "access plus 1 year"
-  ExpiresByType image/png "access plus 1 year"
-  ExpiresByType image/webp "access plus 1 year"
-  ExpiresByType text/css "access plus 1 month"
-  ExpiresByType application/javascript "access plus 1 month"
-</IfModule>
-```
+### Adım 3: Çalıştırma ve Sayfaları Test Etme
+Artık domain adresinizden doğrudan tüm modüllere erişebilirsiniz:
+- **Müşteri QR Menüsü**: `https://siteniz.com/qr/lezzet-duragi`
+- **Mekan Yöneticisi Paneli**: `https://siteniz.com/panel`
+- **Sistem Süper Yöneticisi**: `https://siteniz.com/manager`
+- **POS / Mutfak KDS Ekranı**: `https://siteniz.com/pos`
+- **Menuboard TV Yayını**: `https://siteniz.com/tv`
+- **Mekan Radyo Yayını**: `https://siteniz.com/radyo`
 
 ---
 
-## 6. Adım: Canlı Test ve Doğrulama
+## 3. Menuboard TV Yayınında Yumuşak Işık & Metin Animasyonları
 
-Kurulum bittikten sonra aşağıdaki URL'leri tarayıcınızda açıp test edin:
-
-1. **Müşteri QR Menü**: `https://qradv.com/qr/lezzet-duragi_ana-menu`
-   - Sayfa açıldığında GPS konum iznini onaylayın.
-   - 1+1 Kampanya bannerına tıklayıp ücretsiz hediye ürünü seçin ve sepete atın.
-   - Masaya sipariş ver butonunu test edin.
-2. **Mutfak KDS & POS**: `https://qradv.com/pos`
-   - Yeni sipariş geldiğinde çift tonlu sesli alarmın (ding-dong) çaldığını test edin.
-   - Adisyon yazdır simgesine basıp termal fiş önizlemesini görün.
-3. **Mekan Sahibi Paneli**: `https://qradv.com/panel`
-   - **Masa & QR Kodları**: Masa ekleyin, masa tent kartını yazdırın.
-   - **PDF Flyer**: Farklı temalar seçip "A4 Flyer PDF İndir" butonuna basarak broşürün indiğini doğrulayın.
-   - **XLS Aktarımı**: "Kataloğu Excel Olarak İndir" diyerek `.xlsx` dosyasını alın.
-4. **Menuboard TV**: `https://qradv.com/tv/lezzet-duragi_tv`
-   - Büyük ekranda veya TV tarayıcısında tam ekran moduna alarak canlı kampanya slaytlarını izleyin.
-5. **Mekan Radyosu**: `https://qradv.com/radyo/lezzet-duragi_radio`
-   - Arka plan müzik akışını başlatın ve sesli promosyon anonsunu hoparlörden test edin.
-
----
-
-## 7. Sık Karşılaşılan Sorunlar ve Çözümleri
-
-| Sorun | Neden | Çözüm |
-| :--- | :--- | :--- |
-| **Sayfa yenilenince 404 Not Found veriyor** | `.htaccess` dosyası eksik veya gizli dosya olarak yüklenmemiş | hPanel Dosya Yöneticisi ayarlarından "Gizli Dosyaları Göster"i açın ve `.htaccess` kodunu kaydedin. |
-| **GPS konumu "İzin Verilmedi" hatası veriyor** | Site HTTP üzerinden açılıyor | Hostinger hPanel -> SSL bölümünden Ücretsiz SSL'i etkinleştirin ve HTTPS'e zorlayın. |
-| **POS'ta yeni sipariş sesi çalmıyor** | Tarayıcı otomatik ses çalma (autoplay) politikası | Çalışanlar vardiya başında POS ekranında herhangi bir yere bir defa tıkladığında veya "Sesi Test Et" butonuna bastığında ses motoru aktifleşir. |
+TV yayını ekranında göz yormayan, restorana prestij katan zarif ve yavaş animasyonlar eklendi:
+- **Aurora Light Sweeps**: Arka planda 22 saniyelik periyotta dönen ve renk tonu usulca değişen loş atmosfer ışığı.
+- **Card Glow & Shimmer**: 1+1 Kampanya kartı kenarlarında 7 saniyede bir nefes alan yumuşak altın ışıma.
+- **Text Drift**: Başlık ve ürün isimlerinde 9 saniyede bir hafifçe yukarı-aşağı salınan dinlendirici hareket.
+- **Warm Price Pulse**: Fiyat etiketlerinde 4.5 saniyede bir sıcak kehribar parıltı.
+- **Silk Marquee**: Alt kayan bant yazıları telaşsız, okunabilir ve akıcı (45 saniye).

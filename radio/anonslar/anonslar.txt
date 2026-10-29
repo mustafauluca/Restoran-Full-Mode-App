@@ -1,0 +1,5 @@
+# QR Adv Venue Radio - Announcements (Mekan Canlı Anons & Mutfak Çağrıları)
+
+1. mutfak_siparis_hazir_anonsu.mp3 | 00:08 | "Sayın Garson arkadaşlarımız, 3 numaralı masanın siparişi tezgahta hazırdır."
+2. kurye_paket_hazir_anonsu.mp3 | 00:06 | "Paket servis kuryemiz, 104 numaralı paket teslimata hazırdır."
+3. gun_sonu_kapanis_anonsu.mp3 | 00:14 | "Değerli misafirlerimiz, mutfağımız 30 dakika sonra son siparişlerini alacaktır. Afiyet dileriz."

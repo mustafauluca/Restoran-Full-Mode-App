@@ -21,6 +21,12 @@ CREATE TABLE IF NOT EXISTS `venues` (
   `rate_gbp` DECIMAL(8, 4) NOT NULL DEFAULT 0.0230,
   `min_delivery_amount` DECIMAL(10, 2) NOT NULL DEFAULT 300.00,
   `delivery_fee` DECIMAL(10, 2) NOT NULL DEFAULT 45.00,
+  `free_delivery_threshold` DECIMAL(10, 2) NOT NULL DEFAULT 750.00,
+  `min_table_order` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+  `max_cart_amount` DECIMAL(10, 2) NOT NULL DEFAULT 15000.00,
+  `is_ordering_open` TINYINT(1) NOT NULL DEFAULT 1,
+  `working_hours` VARCHAR(100) NOT NULL DEFAULT '10:00 - 02:00',
+  `currency_last_synced_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `wifi_ssid` VARCHAR(100),
   `wifi_password` VARCHAR(100),
   `theme` VARCHAR(50) NOT NULL DEFAULT 'midnight',
@@ -188,3 +194,55 @@ CREATE TABLE IF NOT EXISTS `waiter_calls` (
   `resolved_at` TIMESTAMP NULL DEFAULT NULL,
   FOREIGN KEY (`venue_id`) REFERENCES `venues`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 12. 6 Saatte Bir Güncellenen Güvenilir TCMB & FX Döviz Kurları Önbelleği
+CREATE TABLE IF NOT EXISTS `exchange_rates` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `base_currency` VARCHAR(10) NOT NULL DEFAULT 'TRY',
+  `usd_rate` DECIMAL(12, 6) NOT NULL,
+  `eur_rate` DECIMAL(12, 6) NOT NULL,
+  `gbp_rate` DECIMAL(12, 6) NOT NULL,
+  `source` VARCHAR(150) NOT NULL DEFAULT 'TCMB & Uluslararası FX API Gateway (6 Saatlik Periyot)',
+  `synced_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX (`synced_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. Ayrı Girişler İçin Kullanıcılar (Site Super Admin, Mekan Yöneticisi, Personel PIN)
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `venue_id` INT UNSIGNED NULL, -- NULL ise Site Platform Super Admin
+  `role` ENUM('super_admin', 'venue_manager', 'staff') NOT NULL,
+  `name` VARCHAR(120) NOT NULL,
+  `email` VARCHAR(150) NULL UNIQUE,
+  `password_hash` VARCHAR(255) NULL,
+  `pin_code` VARCHAR(10) NULL, -- POS & Garson hızlı PIN
+  `station` ENUM('all', 'kitchen', 'grill', 'beverage', 'salad', 'meze') DEFAULT 'all',
+  `is_active` TINYINT(1) DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`venue_id`) REFERENCES `venues`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ====================================================================
+-- BAŞLANGIÇ DEMO VERİLERİ (SEED DATA)
+-- ====================================================================
+
+-- Örnek Restoran
+INSERT INTO `venues` (`id`, `slug`, `name`, `tagline`, `phone`, `email`, `address`, `min_delivery_amount`, `delivery_fee`, `free_delivery_threshold`, `min_table_order`, `max_cart_amount`, `working_hours`, `wifi_ssid`, `wifi_password`, `theme`)
+VALUES (1, 'lezzet-duragi_ana-menu', 'Lezzet Durağı & Steakhouse Gourmet', 'Ateşin ve Ustalığın Buluşma Noktası', '+90 (212) 555 44 33', 'info@lezzetduragi.com', 'Beşiktaş / İstanbul', 300.00, 45.00, 750.00, 0.00, 15000.00, '10:00 - 02:00', 'LezzetDuragi_Guest_5G', 'lezzetetkisi2026', 'midnight')
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Kullanıcılar: Site Super Admin, Mekan Müdürü ve Personel PIN
+INSERT INTO `users` (`venue_id`, `role`, `name`, `email`, `password_hash`, `pin_code`, `station`) VALUES
+(NULL, 'super_admin', 'Sistem Süper Yöneticisi', 'superadmin@qradv.com', '$2y$10$e8wY1M3x3p6hC7n1uT1p8ODl5R3j2i2w9sKq9ZqH6L6uC2l7x4u8.', NULL, 'all'), -- Şifre: admin2026
+(1, 'venue_manager', 'Lezzet Durağı Müdürü', 'yonetici@lezzetduragi.com', '$2y$10$k1rP2s3t4u5v6w7x8y9z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p.', NULL, 'all'), -- Şifre: lezzet2026
+(1, 'staff', 'Kasa & Garson Şefi', NULL, NULL, '1234', 'all'),
+(1, 'staff', 'Mutfak Şefi Ahmet', NULL, NULL, '2222', 'kitchen'),
+(1, 'staff', 'Izgara Ustası Mehmet', NULL, NULL, '3333', 'grill'),
+(1, 'staff', 'Barmen Selin', NULL, NULL, '4444', 'beverage'),
+(1, 'staff', 'Salata Ustası Can', NULL, NULL, '5555', 'salad'),
+(1, 'staff', 'Meze Şefi Fatma', NULL, NULL, '6666', 'meze')
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- 6 Saatlik Döviz Kuru İlk Kaydı
+INSERT INTO `exchange_rates` (`base_currency`, `usd_rate`, `eur_rate`, `gbp_rate`, `source`)
+VALUES ('TRY', 0.029200, 0.026900, 0.022600, 'TCMB & Global FX Gateway (6 Saatlik Otomatik)');

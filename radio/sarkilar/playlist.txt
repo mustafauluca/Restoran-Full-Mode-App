@@ -1,0 +1,7 @@
+# QR Adv Venue Radio - Songs Library (Şarkılar)
+# MP3 / Stream Audio Track Metadata List
+
+1. chillout_deep_lounge_01.mp3 | 03:45 | 120kbps | Ambient House & Coffee Lounge
+2. jazz_cafe_acoustic_02.mp3 | 04:12 | 128kbps | Smooth Sax & Double Bass
+3. sunset_groove_bossa_03.mp3 | 03:30 | 128kbps | Bossa Nova Dining Beats
+4. soft_evening_vibes_04.mp3 | 05:00 | 128kbps | Instrumental Guitar Chillout

@@ -1,4 +1,4 @@
-import { Allergen, Category, Product, Campaign, VenueSettings, CustomerProfile, Order, TVScreenConfig, RadioChannel, LanguageCode } from '../types';
+import { Allergen, Category, Product, Campaign, VenueSettings, CustomerProfile, Order, TVScreenConfig, RadioChannel, RadioGenre, VenuePlaylist, LanguageCode } from '../types';
 
 export const INITIAL_ALLERGENS: Allergen[] = [
   {
@@ -705,6 +705,15 @@ export const INITIAL_VENUE_SETTINGS: VenueSettings = {
   supportedLanguages: ['tr', 'en', 'de', 'ru', 'ar', 'fr'],
   minDeliveryAmount: 300,
   deliveryFee: 45,
+  freeDeliveryThreshold: 750, // 750 TL ve üzeri siparişlerde kurye ücreti 0 ₺
+  minTableOrderAmount: 0, // Masada alt limit zorunluluğu yok veya istenirse ayarlanır
+  maxCartAmount: 15000, // Tek sipariş maksimum sepet limiti
+  isOrderingOpen: true,
+  workingHours: '10:00 - 02:00',
+  tableZones: ['Salon', 'Bahçe', 'Teras', 'Bar', 'VIP Oda'],
+  currencyLastSyncedAt: new Date().toISOString(),
+  currencyDataSource: 'TCMB / Uluslararası Finans API Gateway (6 Saatlik Periyot)',
+  currencyAutoSync: true,
   wifiName: 'LezzetDuragi_Guest_5G',
   wifiPassword: 'lezzetetkisi2026',
   theme: 'midnight',
@@ -842,6 +851,7 @@ export const INITIAL_TV_SCREENS: TVScreenConfig[] = [
   {
     id: 'screen-1',
     name: 'Ana Salon / Giriş Karşılama Ekranı',
+    screenType: 'hybrid_campaign',
     layout: 'campaign_focus',
     headline: 'GÜNÜN FIRSATI: 1 ALANA 1 BEDAVA!',
     activeCampaignId: 'camp-1plus1-burger',
@@ -853,6 +863,7 @@ export const INITIAL_TV_SCREENS: TVScreenConfig[] = [
   {
     id: 'screen-2',
     name: 'Bar & İçecek Reyonu Menuboard',
+    screenType: 'hybrid_campaign',
     layout: 'split_menu',
     headline: 'TAZE MOCKTAILLER & ŞEFİN İMZA TATLILARI',
     activeCampaignId: 'camp-happy-hour',
@@ -860,6 +871,92 @@ export const INITIAL_TV_SCREENS: TVScreenConfig[] = [
     tickerMessage: '🍹 15:00 - 19:00 Arası Happy Hour: 2. İçeceğe %50 İndirim Fırsatı! • Özel Belçika Çikolatalı Suflemizi Denediniz mi?',
     refreshSeconds: 20,
     showQrCode: true,
+  },
+  {
+    id: 'screen-3',
+    name: 'Tezgah Üstü Saf Menü Board (Banner/Headersız)',
+    screenType: 'pure_menu',
+    layout: 'split_menu',
+    headline: 'MENÜ & FİYATLAR',
+    featuredCategoryIds: ['cat-burgers', 'cat-steaks', 'cat-pizzas', 'cat-beverages'],
+    tickerMessage: '',
+    refreshSeconds: 30,
+    showQrCode: false,
+  },
+];
+
+export const INITIAL_RADIO_GENRES: RadioGenre[] = [
+  {
+    id: 'genre-lounge',
+    name: 'Lounge & Chillout Beats',
+    description: 'Yemek ve nezih sohbet ortamı için sıcak, telifsiz lounge ritimleri',
+    icon: '☕',
+    isActive: true,
+  },
+  {
+    id: 'genre-jazz',
+    name: 'Acoustic & Nu-Jazz',
+    description: 'Saksafon, akustik piyano ve sıcak kontrbas tınıları',
+    icon: '🎷',
+    isActive: true,
+  },
+  {
+    id: 'genre-bossa',
+    name: 'Bossa Nova & Latin Rhythms',
+    description: 'Yaz akşamları ve teras alanı için hafif Latin tınıları',
+    icon: '🎸',
+    isActive: true,
+  },
+  {
+    id: 'genre-deep',
+    name: 'Deep House & Warm Grooves',
+    description: 'Akşam saatleri ve bar bölümü için modern atmosferik ritimler',
+    icon: '🎧',
+    isActive: true,
+  },
+  {
+    id: 'genre-turk',
+    name: 'Türk Sanat & Akustik Klasikler',
+    description: 'Geleneksel lezzetler ve meze eşliğinde seçkin ud ve kanun ezgileri',
+    icon: '🪕',
+    isActive: true,
+  },
+  {
+    id: 'genre-pop',
+    name: 'Nostalji 90lar & 2000ler Pop',
+    description: 'Neşeli, dinamik ve popüler Türkçe nostalji şarkıları',
+    icon: '📻',
+    isActive: true,
+  },
+];
+
+export const INITIAL_VENUE_PLAYLISTS: VenuePlaylist[] = [
+  {
+    id: 'pl-evening',
+    name: 'Akşam Yemeği & Steakhouse Ambiyansı',
+    description: 'Sıcak et lezzetleri ve loş ışık eşliğinde çalınacak özel liste',
+    selectedGenreIds: ['genre-lounge', 'genre-jazz'],
+    trackCount: 38,
+    isDefault: true,
+    createdAt: '2026-04-10',
+  },
+  {
+    id: 'pl-lunch',
+    name: 'Öğle Servisi & Hızlı Ritim',
+    description: 'Öğle molası ve burger saatleri için canlı hafif tınılar',
+    selectedGenreIds: ['genre-jazz', 'genre-bossa'],
+    trackCount: 26,
+    isDefault: false,
+    createdAt: '2026-04-12',
+  },
+  {
+    id: 'pl-bar',
+    name: 'Gece Bar & Kokteyl Lounge',
+    description: 'Saat 21:00 sonrası bar ve teras için ritmik atmosfer',
+    selectedGenreIds: ['genre-deep', 'genre-lounge'],
+    trackCount: 42,
+    isDefault: false,
+    createdAt: '2026-04-14',
   },
 ];
 

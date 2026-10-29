@@ -1,0 +1,5 @@
+# QR Adv Venue Radio - Promos & Advertisements (Mekan Reklam & Kampanya Sesleri)
+
+1. bogo_burger_campaign_spot.mp3 | 00:15 | "Dikkat! Masanızdaki QR kodu okutun, Gurme Burgerlerde 1 Alana 1 Bedava fırsatını kaçırmayın!"
+2. happy_hour_announcement.mp3 | 00:12 | "Happy Hour başladı! Saat 19:00'a kadar tüm spesiyal içecek ve kokteyllerde %50 indirim!"
+3. dessert_pairing_promo.mp3 | 00:10 | "Yemeğinizin üzerine fırından yeni çıkmış sıcak San Sebastian veya Suflemizi tatmayı unutmayın."

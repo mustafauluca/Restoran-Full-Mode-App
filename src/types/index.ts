@@ -174,15 +174,53 @@ export interface VenueSettings {
   supportedLanguages: LanguageCode[];
   minDeliveryAmount: number;
   deliveryFee: number;
+  freeDeliveryThreshold: number; // e.g. 500 TL üzeri kurye ücretsiz
+  minTableOrderAmount: number; // e.g. Masaya sipariş alt limiti / kuver
+  maxCartAmount: number; // e.g. 10.000 TL tek sipariş limiti
+  isOrderingOpen: boolean; // Sipariş alımı açık/kapalı
+  workingHours: string; // e.g. "09:00 - 02:00"
+  tableZones: string[]; // e.g. ["Bahçe", "Salon", "Teras", "VIP", "Bar"]
+  currencyLastSyncedAt: string;
+  currencyDataSource: string;
+  currencyAutoSync: boolean;
   wifiName?: string;
   wifiPassword?: string;
   theme: 'midnight' | 'gold' | 'neon' | 'olive' | 'clean';
   flyerTheme: 'modern_dark' | 'bistro_vintage' | 'neon_punch' | 'minimal_white';
 }
 
+export interface SuperAdminSession {
+  isAuthenticated: boolean;
+  email: string;
+  name: string;
+  role: 'super_admin';
+  loginAt?: string;
+}
+
+export interface VenueManagerSession {
+  isAuthenticated: boolean;
+  venueId: string;
+  email: string;
+  managerName: string;
+  role: 'venue_manager' | 'venue_owner';
+  loginAt?: string;
+}
+
+export interface StaffSession {
+  isAuthenticated: boolean;
+  staffId: string;
+  name: string;
+  station: KitchenStation;
+  pin: string;
+  loginAt?: string;
+}
+
+export type TVScreenType = 'hybrid_campaign' | 'pure_menu';
+
 export interface TVScreenConfig {
   id: string;
   name: string;
+  screenType: TVScreenType; // 'hybrid_campaign' or 'pure_menu' (no banner, no header, only categories & popular dishes)
   layout: 'campaign_focus' | 'split_menu' | 'ticker_board' | 'video_promo';
   headline: string;
   activeCampaignId?: string;
@@ -190,6 +228,24 @@ export interface TVScreenConfig {
   tickerMessage: string;
   refreshSeconds: number;
   showQrCode: boolean;
+}
+
+export interface RadioGenre {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+  isActive: boolean;
+}
+
+export interface VenuePlaylist {
+  id: string;
+  name: string;
+  description?: string;
+  selectedGenreIds: string[];
+  trackCount: number;
+  isDefault?: boolean;
+  createdAt: string;
 }
 
 export interface RadioChannel {
@@ -202,3 +258,4 @@ export interface RadioChannel {
   currentTrack: string;
   currentArtist: string;
 }
+

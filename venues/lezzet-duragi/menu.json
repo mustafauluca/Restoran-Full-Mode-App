@@ -1,0 +1,55 @@
+{
+  "categories": [
+    {"id": "cat-burger", "name": {"tr": "Gurme Burgerler", "en": "Gourmet Burgers", "de": "Gourmet-Burger", "ru": "Бургеры", "ar": "برجر جورميه"}, "icon": "🍔"},
+    {"id": "cat-steak", "name": {"tr": "Steak & Izgaralar", "en": "Steaks & Grills", "de": "Steaks & Grill", "ru": "Стейки и гриль", "ar": "ستيك ومشاوي"}, "icon": "🥩"},
+    {"id": "cat-drinks", "name": {"tr": "İçecek & Kokteyl", "en": "Drinks & Cocktails", "de": "Getränke & Cocktails", "ru": "Напитки и коктейли", "ar": "مشروبات وكوكتيل"}, "icon": "🍹"}
+  ],
+  "campaigns": [
+    {
+      "id": "camp-bogo-burger",
+      "type": "buy_1_get_1",
+      "title": {"tr": "1 ALANA 1 BEDAVA GURME BURGER", "en": "BUY 1 GET 1 FREE BURGER", "de": "1 KAUFEN 1 GRATIS BURGER", "ru": "1+1 БУРГЕР В ПОДАРОК", "ar": "اشتري 1 واحصل على 1 مجاناً"},
+      "subtitle": {"tr": "Seçili gurme burgerlerde ikincisi şefimizin ikramı!", "en": "Second gourmet burger is completely free!", "de": "Der zweite Burger geht aufs Haus!", "ru": "Второй бургер бесплатно!", "ar": "البرجر الثاني مجاناً بالكامل!"},
+      "badgeText": {"tr": "1 ALANA 1 BEDAVA", "en": "BUY 1 GET 1", "de": "1+1 GRATIS", "ru": "1+1 АКЦИЯ", "ar": "1+1 مجاناً"},
+      "description": {"tr": "Truffle Burger veya Dallas Smash aldığınızda, sepetinizdeki ikinci burger tamamen ücretsiz olarak masanıza gelir.", "en": "Order a Truffle Burger and choose another one for free.", "de": "Bestellen Sie einen Trüffel-Burger und erhalten Sie einen zweiten gratis.", "ru": "Купите трюфельный бургер и получите второй бесплатно.", "ar": "اطلب برجر الكمأة واحصل على الثاني مجاناً."},
+      "bannerImage": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=80",
+      "requiredProductIds": ["prod-truffle-burger", "prod-smash-burger"],
+      "freeProductIds": ["prod-classic-burger", "prod-cheese-burger"]
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-truffle-burger",
+      "categoryId": "cat-burger",
+      "name": {"tr": "Truffle & Mantar Burger", "en": "Truffle & Mushroom Burger", "de": "Trüffel-Pilz-Burger", "ru": "Трюфельный бургер", "ar": "برجر الفطر والكمأة"},
+      "description": {"tr": "200g dinlendirilmiş dana köfte, taze trüf mayonez, sotelenmiş porçini mantarı, karamelize soğan, cheddar.", "en": "200g aged beef patty, truffle mayo, porcini mushrooms, caramelized onions.", "de": "200g Rindfleisch, Trüffel-Mayo, Steinpilze, Cheddar.", "ru": "200г говядины, трюфельный майонез, белые грибы.", "ar": "شريحة لحم بقر 200 غرام مع مايونيز الكمأة وفطر بورتشيني."},
+      "price": 380.00,
+      "calories": 780,
+      "preparationTime": 15,
+      "allergens": ["Gluten", "Süt Ürünü", "Yumurta"],
+      "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "prod-smash-burger",
+      "categoryId": "cat-burger",
+      "name": {"tr": "Dallas Çift Katlı Smash Burger", "en": "Dallas Double Smash Burger", "de": "Dallas Doppel-Smash Burger", "ru": "Даллас Смэш Бургер", "ar": "برجر دالاس سماش مضاعف"},
+      "description": {"tr": "2x100g çıtır kenarlı smash dana köfte, duble eritilmiş Amerikan peyniri, ev yapımı barbekü sos ve turşu.", "en": "2x100g crispy edge beef smash patties, double American cheese, BBQ sauce.", "de": "2x100g Rindfleisch-Patties, doppelter Käse, BBQ-Sauce.", "ru": "Двойная говяжья котлета смэш, сыр, соус барбекю.", "ar": "شريحتي لحم مقرمشة، جبنة أمريكية مضاعفة، صلصة باربكيو."},
+      "price": 340.00,
+      "calories": 840,
+      "preparationTime": 12,
+      "allergens": ["Gluten", "Süt Ürünü"],
+      "image": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "prod-dallas-steak",
+      "categoryId": "cat-steak",
+      "name": {"tr": "Dry Aged Dallas Steak (450g)", "en": "Dry Aged Dallas Steak (450g)", "de": "Dry Aged Dallas Steak (450g)", "ru": "Стейк Даллас сухого вызревания (450г)", "ar": "ستيك دالاس المعتق (450 غرام)"},
+      "description": {"tr": "28 gün kaya tuzu odasında dinlendirilmiş kemikli antrikot, trüflü patates püresi ve ızgara kuşkonmaz eşliğinde.", "en": "28 days dry aged bone-in ribeye with truffle mashed potatoes and grilled asparagus.", "de": "28 Tage gereiftes Ribeye-Steak mit Trüffelpüree.", "ru": "Рибай на кости 28 дней выдержки с трюфельным пюре.", "ar": "شريحة لحم ريب آي معتقة 28 يوماً مع بطاطس مهروسة بالكمأة."},
+      "price": 790.00,
+      "calories": 950,
+      "preparationTime": 22,
+      "allergens": ["Süt Ürünü"],
+      "image": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80"
+    }
+  ]
+}

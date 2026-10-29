@@ -10,13 +10,15 @@
   RewriteCond %{REQUEST_URI} ^/api/ [NC]
   RewriteRule ^api/(.*)$ api/$1 [L]
 
-  # 3. Gerçek dosya veya dizin varsa doğrudan aç
+  # 3. Gerçek dosya veya dizin varsa doğrudan sun (media, assets, radio)
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # 4. Tüm SPA rotalarını index.html'e yönlendir
-  RewriteRule ^ index.html [L]
+  # 4. PHP Front Controller Rotaları (qradv.com/qr, /panel, /manager, /pos, /tv, /radyo)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
 
 <IfModule mod_deflate.c>

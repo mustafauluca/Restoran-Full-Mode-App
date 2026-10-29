@@ -38,6 +38,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     customer,
     createOrder,
     activeLanguage,
+    computedDeliveryFee,
+    checkOrderQuota,
   } = useApp();
 
   const [orderNote, setOrderNote] = useState('');
@@ -65,9 +67,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     'Teras 2',
   ];
 
-  const deliveryFee = isInsideRestaurant ? 0 : venue.deliveryFee;
+  const deliveryFee = isInsideRestaurant ? 0 : computedDeliveryFee;
   const grandTotal = cartTotal + deliveryFee;
-  const meetsMinDelivery = isInsideRestaurant || cartTotal >= venue.minDeliveryAmount;
+  const quotaResult = checkOrderQuota(isInsideRestaurant ? 'table' : 'delivery');
+  const isFreeDeliveryEligible = !isInsideRestaurant && venue.freeDeliveryThreshold > 0 && cartTotal >= venue.freeDeliveryThreshold;
 
   const handlePlaceOrder = () => {
     if (cart.length === 0) return;
@@ -340,12 +343,28 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                         </p>
                       )}
 
-                      {!meetsMinDelivery && (
-                        <div className="flex items-center gap-1 text-[11px] text-rose-400 pt-1">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                          <span>
-                            Paket servis için minimum sepet {formatPrice(venue.minDeliveryAmount)} olmalıdır.
-                          </span>
+                      {/* Quota Error / Warning */}
+                      {!quotaResult.valid && (
+                        <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs">
+                          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                          <span>{quotaResult.reason}</span>
+                        </div>
+                      )}
+
+                      {/* Free Delivery Threshold Incentive */}
+                      {!isInsideRestaurant && venue.freeDeliveryThreshold > 0 && (
+                        <div className={`p-2 rounded-xl text-xs font-semibold flex items-center justify-between ${
+                          isFreeDeliveryEligible
+                            ? 'bg-emerald-950/50 border border-emerald-500/40 text-emerald-300'
+                            : 'bg-neutral-900 border border-neutral-800 text-neutral-300'
+                        }`}>
+                          {isFreeDeliveryEligible ? (
+                            <span>🎉 Tebrikler! {formatPrice(venue.freeDeliveryThreshold)} üzeri kurye ÜCRETSİZ!</span>
+                          ) : (
+                            <span>
+                              🚀 {formatPrice(venue.freeDeliveryThreshold - cartTotal)} daha ekleyin, <strong className="text-emerald-400">Kurye 0 ₺</strong> olsun!
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -418,7 +437,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                     {!isInsideRestaurant && (
                       <div className="flex justify-between text-neutral-400">
                         <span>Kurye Teslimatı:</span>
-                        <span>{formatPrice(venue.deliveryFee)}</span>
+                        <span>{deliveryFee === 0 ? <strong className="text-emerald-400">Ücretsiz (0 ₺)</strong> : formatPrice(deliveryFee)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm font-black text-neutral-100 pt-1 border-t border-neutral-800">
@@ -430,10 +449,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                   {/* Submit Order Button */}
                   <button
                     onClick={handlePlaceOrder}
-                    disabled={!meetsMinDelivery}
+                    disabled={!quotaResult.valid || (!isInsideRestaurant && !selectedAddress)}
                     className={`w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all ${
-                      meetsMinDelivery
-                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950'
+                      quotaResult.valid && (isInsideRestaurant || selectedAddress)
+                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 cursor-pointer'
                         : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
                     }`}
                   >

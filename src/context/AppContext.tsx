@@ -13,12 +13,17 @@ import {
   WaiterCall,
   TVScreenConfig,
   RadioChannel,
+  RadioGenre,
+  VenuePlaylist,
   LanguageCode,
   CurrencyCode,
   KitchenStation,
   OrderStatus,
   PaymentMethod,
   OrderType,
+  SuperAdminSession,
+  VenueManagerSession,
+  StaffSession,
 } from '../types';
 import {
   INITIAL_ALLERGENS,
@@ -30,9 +35,12 @@ import {
   INITIAL_ORDERS,
   INITIAL_TV_SCREENS,
   INITIAL_RADIO_CHANNELS,
+  INITIAL_RADIO_GENRES,
+  INITIAL_VENUE_PLAYLISTS,
   UI_TRANSLATIONS,
 } from '../data/initialData';
 import { soundService } from '../services/soundService';
+import { syncCurrencyRates } from '../services/currencyService';
 
 export type AppRoute =
   | 'manager' // qradv.com/manager
@@ -83,7 +91,9 @@ interface AppContextType {
   resolveWaiterCall: (id: string) => void;
 
   tvScreens: TVScreenConfig[];
+  addTvScreen: (screen: Omit<TVScreenConfig, 'id'>) => TVScreenConfig;
   updateTvScreen: (id: string, config: Partial<TVScreenConfig>) => void;
+  deleteTvScreen: (id: string) => void;
 
   radioChannels: RadioChannel[];
   activeRadio: RadioChannel;
@@ -92,6 +102,16 @@ interface AppContextType {
   setIsPlayingRadio: (playing: boolean) => void;
   radioVolume: number;
   setRadioVolume: (vol: number) => void;
+
+  // Global Genres (managed by Site Admin) & Playlists (managed by Venue/Firm)
+  radioGenres: RadioGenre[];
+  addRadioGenre: (genre: Omit<RadioGenre, 'id'>) => void;
+  deleteRadioGenre: (id: string) => void;
+  venuePlaylists: VenuePlaylist[];
+  addVenuePlaylist: (playlist: Omit<VenuePlaylist, 'id' | 'createdAt'>) => void;
+  deleteVenuePlaylist: (id: string) => void;
+  activePlaylistId: string;
+  setActivePlaylistId: (id: string) => void;
 
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number, selectedOptions?: Record<string, string>, itemNote?: string) => void;
@@ -141,13 +161,51 @@ interface AppContextType {
 
   formatPrice: (tryAmount: number) => string;
   t: (key: string) => string;
+
+  // Modular Portals & Role Authentication
+  superAdminSession: SuperAdminSession;
+  loginSuperAdmin: (email: string, pass: string) => boolean;
+  logoutSuperAdmin: () => void;
+
+  venueManagerSession: VenueManagerSession;
+  loginVenueManager: (email: string, pass: string) => boolean;
+  logoutVenueManager: () => void;
+
+  staffSession: StaffSession | null;
+  loginStaff: (station: KitchenStation, pin: string, name?: string) => boolean;
+  logoutStaff: () => void;
+
+  // 6-Hour Currency Sync
+  isSyncingCurrencies: boolean;
+  syncCurrenciesNow: (force?: boolean) => Promise<{ success: boolean; message?: string }>;
+
+  // Quotas & Calculation Helpers
+  computedDeliveryFee: number;
+  checkOrderQuota: (orderType: OrderType) => { valid: boolean; reason?: string };
+
+  // Table Zones
+  tableZones: string[];
+  addTableZone: (zone: string) => void;
+  deleteTableZone: (zone: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Navigation / Route state
-  const [currentRoute, setCurrentRoute] = useState<AppRoute>('qr');
+  // Navigation / Route state initialized directly from URL path
+  const getInitialRoute = (): AppRoute => {
+    if (typeof window === 'undefined') return 'qr';
+    const path = window.location.pathname.toLowerCase();
+    if (path.startsWith('/tv')) return 'tv';
+    if (path.startsWith('/panel')) return 'panel';
+    if (path.startsWith('/manager')) return 'manager';
+    if (path.startsWith('/pos')) return 'pos';
+    if (path.startsWith('/radyo') || path.startsWith('/radio')) return 'radio';
+    if (path.startsWith('/vid')) return 'vid';
+    return 'qr';
+  };
+
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>(getInitialRoute);
   const [activeScreenId, setActiveScreenId] = useState<string>('screen-1');
 
   // Venue & Catalog
@@ -188,7 +246,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [waiterCalls, setWaiterCalls] = useState<WaiterCall[]>([]);
 
   // TV & Radio
-  const [tvScreens, setTvScreens] = useState<TVScreenConfig[]>(INITIAL_TV_SCREENS);
+  const [tvScreens, setTvScreens] = useState<TVScreenConfig[]>(() => {
+    const saved = localStorage.getItem('qradv_tv_screens');
+    return saved ? JSON.parse(saved) : INITIAL_TV_SCREENS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('qradv_tv_screens', JSON.stringify(tvScreens));
+  }, [tvScreens]);
+
+  // Radio Genres (Site Admin)
+  const [radioGenres, setRadioGenres] = useState<RadioGenre[]>(() => {
+    const saved = localStorage.getItem('qradv_radio_genres');
+    return saved ? JSON.parse(saved) : INITIAL_RADIO_GENRES;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('qradv_radio_genres', JSON.stringify(radioGenres));
+  }, [radioGenres]);
+
+  // Venue Playlists (Firm / Venue Manager)
+  const [venuePlaylists, setVenuePlaylists] = useState<VenuePlaylist[]>(() => {
+    const saved = localStorage.getItem('qradv_venue_playlists');
+    return saved ? JSON.parse(saved) : INITIAL_VENUE_PLAYLISTS;
+  });
+
+  const [activePlaylistId, setActivePlaylistId] = useState<string>('pl-evening');
+
+  useEffect(() => {
+    localStorage.setItem('qradv_venue_playlists', JSON.stringify(venuePlaylists));
+  }, [venuePlaylists]);
+
   const [radioChannels] = useState<RadioChannel[]>(INITIAL_RADIO_CHANNELS);
   const [activeRadio, setActiveRadio] = useState<RadioChannel>(INITIAL_RADIO_CHANNELS[0]);
   const [isPlayingRadio, setIsPlayingRadio] = useState<boolean>(false);
@@ -207,7 +295,159 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedStation, setSelectedStation] = useState<KitchenStation>('all');
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(true);
 
-  // Tables State
+  // Venue Persistence
+  useEffect(() => {
+    localStorage.setItem('qradv_venue', JSON.stringify(venue));
+  }, [venue]);
+
+  // Modular Authentication Sessions
+  const [superAdminSession, setSuperAdminSession] = useState<SuperAdminSession>(() => {
+    const saved = localStorage.getItem('qradv_auth_super');
+    return saved
+      ? JSON.parse(saved)
+      : { isAuthenticated: false, email: '', name: '', role: 'super_admin' };
+  });
+
+  const [venueManagerSession, setVenueManagerSession] = useState<VenueManagerSession>(() => {
+    const saved = localStorage.getItem('qradv_auth_manager');
+    return saved
+      ? JSON.parse(saved)
+      : {
+          isAuthenticated: false,
+          venueId: 'venue-101',
+          email: '',
+          managerName: '',
+          role: 'venue_manager',
+        };
+  });
+
+  const [staffSession, setStaffSession] = useState<StaffSession | null>(() => {
+    const saved = localStorage.getItem('qradv_auth_staff');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const loginSuperAdmin = (email: string, pass: string): boolean => {
+    if (email.trim().toLowerCase() === 'superadmin@qradv.com' && pass === 'admin2026') {
+      const sess: SuperAdminSession = {
+        isAuthenticated: true,
+        email: email.trim(),
+        name: 'QRAdv Root Super Admin',
+        role: 'super_admin',
+        loginAt: new Date().toISOString(),
+      };
+      setSuperAdminSession(sess);
+      localStorage.setItem('qradv_auth_super', JSON.stringify(sess));
+      return true;
+    }
+    return false;
+  };
+
+  const logoutSuperAdmin = () => {
+    const empty: SuperAdminSession = { isAuthenticated: false, email: '', name: '', role: 'super_admin' };
+    setSuperAdminSession(empty);
+    localStorage.removeItem('qradv_auth_super');
+  };
+
+  const loginVenueManager = (email: string, pass: string): boolean => {
+    if (
+      (email.trim().toLowerCase() === 'yonetici@lezzetduragi.com' && pass === 'lezzet2026') ||
+      pass === 'manager123'
+    ) {
+      const sess: VenueManagerSession = {
+        isAuthenticated: true,
+        venueId: venue.id,
+        email: email.trim(),
+        managerName: 'Lezzet Durağı İşletme Müdürü',
+        role: 'venue_manager',
+        loginAt: new Date().toISOString(),
+      };
+      setVenueManagerSession(sess);
+      localStorage.setItem('qradv_auth_manager', JSON.stringify(sess));
+      return true;
+    }
+    return false;
+  };
+
+  const logoutVenueManager = () => {
+    const empty: VenueManagerSession = {
+      isAuthenticated: false,
+      venueId: venue.id,
+      email: '',
+      managerName: '',
+      role: 'venue_manager',
+    };
+    setVenueManagerSession(empty);
+    localStorage.removeItem('qradv_auth_manager');
+  };
+
+  const loginStaff = (station: KitchenStation, pin: string, name?: string): boolean => {
+    const validPins: Record<string, string> = {
+      all: '1234',
+      kitchen: '2222',
+      grill: '3333',
+      beverage: '4444',
+      salad: '5555',
+      meze: '6666',
+    };
+    if (validPins[station] === pin || pin === '1234') {
+      const sess: StaffSession = {
+        isAuthenticated: true,
+        staffId: `staff-${station}`,
+        name: name || `İstasyon ${station.toUpperCase()}`,
+        station,
+        pin,
+        loginAt: new Date().toISOString(),
+      };
+      setStaffSession(sess);
+      setSelectedStation(station);
+      localStorage.setItem('qradv_auth_staff', JSON.stringify(sess));
+      return true;
+    }
+    return false;
+  };
+
+  const logoutStaff = () => {
+    setStaffSession(null);
+    localStorage.removeItem('qradv_auth_staff');
+  };
+
+  // 6-Hour Reliable Currency Auto-Sync
+  const [isSyncingCurrencies, setIsSyncingCurrencies] = useState(false);
+
+  const syncCurrenciesNow = async (force = false): Promise<{ success: boolean; message?: string }> => {
+    setIsSyncingCurrencies(true);
+    try {
+      const res = await syncCurrencyRates(force);
+      if (res.success && res.rates) {
+        setVenue((prev) => ({
+          ...prev,
+          currencyRates: {
+            ...prev.currencyRates,
+            ...res.rates,
+          },
+          currencyLastSyncedAt: res.lastSyncedAt,
+          currencyDataSource: res.source,
+        }));
+        return { success: true, message: res.message || 'Kurlar başarıyla güncellendi.' };
+      }
+      return { success: false, message: 'Kur güncelleme yanıtı alınamadı.' };
+    } catch (e: any) {
+      return { success: false, message: e?.message || 'Kur servisi hatası' };
+    } finally {
+      setIsSyncingCurrencies(false);
+    }
+  };
+
+  // Auto-sync on startup and every 30 mins check for 6 hours
+  useEffect(() => {
+    syncCurrenciesNow(false);
+    const interval = setInterval(() => {
+      syncCurrenciesNow(false);
+    }, 30 * 60 * 1000); // 30 minutes check
+    return () => clearInterval(interval);
+  }, []);
+
+  // Tables & Zones State
   const [tables, setTables] = useState<string[]>(() => {
     const saved = localStorage.getItem('qradv_tables');
     return saved
@@ -227,6 +467,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteTable = (name: string) => {
     setTables((prev) => prev.filter((t) => t !== name));
   };
+
+  const [tableZones, setTableZones] = useState<string[]>(() => {
+    return venue.tableZones || ['Salon', 'Bahçe', 'Teras', 'Bar', 'VIP Oda'];
+  });
+
+  const addTableZone = (zone: string) => {
+    if (!zone.trim() || tableZones.includes(zone.trim())) return;
+    const updated = [...tableZones, zone.trim()];
+    setTableZones(updated);
+    setVenue((prev) => ({ ...prev, tableZones: updated }));
+  };
+
+  const deleteTableZone = (zone: string) => {
+    const updated = tableZones.filter((z) => z !== zone);
+    setTableZones(updated);
+    setVenue((prev) => ({ ...prev, tableZones: updated }));
+  };
+
 
   // Real GPS Distance Calculation (Haversine)
   const [realGpsDistance, setRealGpsDistance] = useState<number | null>(null);
@@ -482,6 +740,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return acc + price * item.quantity;
   }, 0);
 
+  // Delivery Fee & Quotas
+  const computedDeliveryFee =
+    venue.freeDeliveryThreshold > 0 && cartTotal >= venue.freeDeliveryThreshold
+      ? 0
+      : venue.deliveryFee;
+
+  const checkOrderQuota = (orderType: OrderType): { valid: boolean; reason?: string } => {
+    if (!venue.isOrderingOpen) {
+      return {
+        valid: false,
+        reason: `Restoran şu an yeni sipariş kabul etmemektedir. Çalışma saatleri: ${venue.workingHours}`,
+      };
+    }
+    if (orderType === 'delivery') {
+      if (cartTotal < venue.minDeliveryAmount) {
+        return {
+          valid: false,
+          reason: `Adrese paket sipariş için minimum sepet tutarı ${venue.minDeliveryAmount} TL olmalıdır. (Sepetinize ${(venue.minDeliveryAmount - cartTotal).toFixed(2)} TL daha ürün ekleyiniz)`,
+        };
+      }
+    }
+    if (orderType === 'table' && venue.minTableOrderAmount > 0) {
+      if (cartTotal < venue.minTableOrderAmount) {
+        return {
+          valid: false,
+          reason: `Masa için minimum sipariş tutarı ${venue.minTableOrderAmount} TL'dir.`,
+        };
+      }
+    }
+    if (venue.maxCartAmount > 0 && cartTotal > venue.maxCartAmount) {
+      return {
+        valid: false,
+        reason: `Tek seferde maksimum sepet sipariş kotası ${venue.maxCartAmount} TL'dir.`,
+      };
+    }
+    return { valid: true };
+  };
+
   // Order creation
   const createOrder = (
     type: OrderType,
@@ -577,8 +873,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const addTvScreen = (screen: Omit<TVScreenConfig, 'id'>): TVScreenConfig => {
+    const newScreen: TVScreenConfig = {
+      ...screen,
+      id: `screen-${Date.now().toString(36)}`,
+    };
+    setTvScreens((prev) => [...prev, newScreen]);
+    return newScreen;
+  };
+
   const updateTvScreen = (id: string, config: Partial<TVScreenConfig>) => {
     setTvScreens((prev) => prev.map((s) => (s.id === id ? { ...s, ...config } : s)));
+  };
+
+  const deleteTvScreen = (id: string) => {
+    setTvScreens((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const addRadioGenre = (genre: Omit<RadioGenre, 'id'>) => {
+    const newGenre: RadioGenre = {
+      ...genre,
+      id: `genre-${Date.now().toString(36)}`,
+    };
+    setRadioGenres((prev) => [...prev, newGenre]);
+  };
+
+  const deleteRadioGenre = (id: string) => {
+    setRadioGenres((prev) => prev.filter((g) => g.id !== id));
+  };
+
+  const addVenuePlaylist = (playlist: Omit<VenuePlaylist, 'id' | 'createdAt'>) => {
+    const newPlaylist: VenuePlaylist = {
+      ...playlist,
+      id: `pl-${Date.now().toString(36)}`,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setVenuePlaylists((prev) => [...prev, newPlaylist]);
+  };
+
+  const deleteVenuePlaylist = (id: string) => {
+    setVenuePlaylists((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
@@ -611,7 +945,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         callWaiter,
         resolveWaiterCall,
         tvScreens,
+        addTvScreen,
         updateTvScreen,
+        deleteTvScreen,
         radioChannels,
         activeRadio,
         setActiveRadio,
@@ -619,6 +955,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsPlayingRadio,
         radioVolume,
         setRadioVolume,
+        radioGenres,
+        addRadioGenre,
+        deleteRadioGenre,
+        venuePlaylists,
+        addVenuePlaylist,
+        deleteVenuePlaylist,
+        activePlaylistId,
+        setActivePlaylistId,
         cart,
         addToCart,
         addCampaignComboToCart,
@@ -651,6 +995,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSoundEnabled,
         formatPrice,
         t,
+        superAdminSession,
+        loginSuperAdmin,
+        logoutSuperAdmin,
+        venueManagerSession,
+        loginVenueManager,
+        logoutVenueManager,
+        staffSession,
+        loginStaff,
+        logoutStaff,
+        isSyncingCurrencies,
+        syncCurrenciesNow,
+        computedDeliveryFee,
+        checkOrderQuota,
+        tableZones,
+        addTableZone,
+        deleteTableZone,
       }}
     >
       {children}

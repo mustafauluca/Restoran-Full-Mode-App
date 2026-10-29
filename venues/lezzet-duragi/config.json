@@ -1,0 +1,65 @@
+{
+  "id": 101,
+  "slug": "lezzet-duragi",
+  "name": "Lezzet Durağı Steakhouse",
+  "tagline": "Odun Ateşinde Gurme Lezzetler & Akıllı QR Dijital Menü",
+  "logo": "🥩",
+  "phone": "+90 532 111 2233",
+  "address": "Bağdat Caddesi No: 142 Kadıköy / İstanbul",
+  "wifiName": "LezzetDuragi_Guest",
+  "wifiPassword": "lezzet2026!",
+  "currency": "TRY",
+  "currencies": ["TRY", "USD", "EUR", "GBP"],
+  "orderQuota": {
+    "enabled": true,
+    "minOrderAmount": 150.00,
+    "deliveryFee": 35.00,
+    "freeDeliveryThreshold": 500.00,
+    "maxOrderCap": 5000.00
+  },
+  "tables": [
+    {"id": "T-1", "name": "Masa 1", "zone": "Bahçe", "status": "empty"},
+    {"id": "T-2", "name": "Masa 2", "zone": "Bahçe", "status": "occupied"},
+    {"id": "T-3", "name": "Masa 3", "zone": "Salon", "status": "empty"},
+    {"id": "T-4", "name": "Masa 4", "zone": "VIP Teras", "status": "empty"},
+    {"id": "T-5", "name": "Masa 5", "zone": "VIP Teras", "status": "empty"}
+  ],
+  "tvScreens": [
+    {
+      "id": "screen-1",
+      "name": "Ana Salon Menuboard TV",
+      "screenType": "hybrid_campaign",
+      "tickerMessage": "🔥 BUGÜNE ÖZEL 1 ALANA 1 BEDAVA GURME BURGER KAMPANYASINI KAÇIRMAYIN!",
+      "refreshSeconds": 15
+    },
+    {
+      "id": "screen-2",
+      "name": "Bahçe / Teras TV",
+      "screenType": "hybrid_campaign",
+      "tickerMessage": "🍹 HAPPY HOUR: 15:00 - 19:00 ARASI TÜM İÇECEKLERDE %50 İNDİRİM!",
+      "refreshSeconds": 20
+    },
+    {
+      "id": "screen-3",
+      "name": "Kasa Arkası Saf Menü Board",
+      "screenType": "pure_menu",
+      "categories": ["cat-burger", "cat-steak", "cat-drinks"],
+      "tickerMessage": "",
+      "refreshSeconds": 30
+    }
+  ],
+  "playlists": [
+    {
+      "id": "pl-evening",
+      "name": "Akşam Yemeği & Lounge",
+      "selectedGenres": ["Lounge", "Nu-Jazz", "Akustik"],
+      "trackCount": 38
+    },
+    {
+      "id": "pl-weekend",
+      "name": "Hafta Sonu Dinamik Ritim",
+      "selectedGenres": ["Deep House", "Bossa Nova"],
+      "trackCount": 42
+    }
+  ]
+}

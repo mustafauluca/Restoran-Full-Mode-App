@@ -1,0 +1,5 @@
+# QR Adv Venue Radio - Jingles (Mekan Giriş & Geçiş Jingle'ları)
+
+1. venue_welcome_jingle.mp3 | 00:06 | "Lezzet Durağına Hoş Geldiniz! Keyifli Anlar..."
+2. signature_taste_drop.mp3 | 00:04 | "Damak Çatlatan Lezzetler, QR Adv ile Masanızda!"
+3. chef_whisper_intro.mp3 | 00:05 | "Şefin Ateşi Yanıyor, İyi Dinlemeler..."

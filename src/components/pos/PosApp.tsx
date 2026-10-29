@@ -16,7 +16,10 @@ import {
   Flame,
   Wine,
   Sparkles,
+  LogOut,
+  User,
 } from 'lucide-react';
+import { PosStaffLogin } from '../auth/PosStaffLogin';
 
 export const PosApp: React.FC = () => {
   const {
@@ -29,6 +32,8 @@ export const PosApp: React.FC = () => {
     formatPrice,
     soundEnabled,
     setSoundEnabled,
+    staffSession,
+    logoutStaff,
   } = useApp();
 
   const [activeStation, setActiveStation] = useState<KitchenStation | 'all' | 'cashier'>('all');
@@ -41,6 +46,11 @@ export const PosApp: React.FC = () => {
     const timer = setInterval(() => setNowTime(Date.now()), 15000);
     return () => clearInterval(timer);
   }, []);
+
+  // Enforce Staff PIN Auth Guard
+  if (!staffSession || !staffSession.isAuthenticated) {
+    return <PosStaffLogin />;
+  }
 
   const activeWaiterCalls = waiterCalls.filter((c) => c.status === 'active');
 
@@ -135,6 +145,21 @@ export const PosApp: React.FC = () => {
               {orders.filter((o) => o.type === 'delivery' && o.status !== 'delivered').length} Paket
             </span>
           </div>
+
+          {/* Staff Identity Badge */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs">
+            <User className="w-3.5 h-3.5 text-amber-400" />
+            <span className="font-bold text-white">{staffSession.name}</span>
+          </div>
+
+          {/* Logout PIN */}
+          <button
+            onClick={logoutStaff}
+            className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>PIN Çıkış</span>
+          </button>
         </div>
       </div>
 

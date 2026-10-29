@@ -18,14 +18,22 @@ import {
   QrCode,
 } from 'lucide-react';
 
+import { VenueManagerLogin } from '../auth/VenueManagerLogin';
+import { LogOut, User } from 'lucide-react';
+
 export const VenuePanelApp: React.FC = () => {
-  const { venue, setCurrentRoute } = useApp();
+  const { venue, setCurrentRoute, venueManagerSession, logoutVenueManager } = useApp();
 
   const [activeTab, setActiveTab] = useState<
     'campaigns' | 'flyer' | 'xls' | 'menu' | 'tables' | 'settings'
   >('campaigns');
 
   const [isArchitectureModalOpen, setIsArchitectureModalOpen] = useState(false);
+
+  // Dedicated Venue Manager Gate
+  if (!venueManagerSession.isAuthenticated) {
+    return <VenueManagerLogin />;
+  }
 
   const tabs = [
     {
@@ -91,13 +99,19 @@ export const VenuePanelApp: React.FC = () => {
             <span>Canlı QR Menüyü Aç</span>
           </button>
 
-          {/* PHP / MySQL Architecture Modal Button */}
+          {/* Logged in Manager Info */}
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-300">
+            <User className="w-3.5 h-3.5 text-amber-400" />
+            <span className="font-semibold text-white">{venueManagerSession.email}</span>
+          </div>
+
+          {/* Logout Button */}
           <button
-            onClick={() => setIsArchitectureModalOpen(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+            onClick={logoutVenueManager}
+            className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Database className="w-3.5 h-3.5" />
-            <span>PHP & MySQL Mimarisi</span>
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Çıkış Yap</span>
           </button>
         </div>
       </div>
